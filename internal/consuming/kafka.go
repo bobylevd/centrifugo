@@ -176,10 +176,12 @@ func (c *KafkaConsumer) initClient() (*kgo.Client, error) {
 				Pass: c.config.SASLPassword,
 			}.AsSha512Mechanism()))
 		case "aws-msk-iam":
-			opts = append(opts, kgo.SASL(aws.Auth{
-				AccessKey: c.config.SASLUser,
-				SecretKey: c.config.SASLPassword,
-			}.AsManagedStreamingIAMMechanism()))
+			awsAuth := aws.Auth{}
+			if c.config.SASLUser != "" && c.config.SASLPassword != "" {
+				awsAuth.AccessKey = c.config.SASLUser
+				awsAuth.SecretKey = c.config.SASLPassword
+			}
+			opts = append(opts, kgo.SASL(awsAuth.AsManagedStreamingIAMMechanism()))
 		default:
 			return nil, fmt.Errorf("unsupported SASL mechanism: %s", c.config.SASLMechanism)
 		}
